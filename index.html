@@ -1,52 +1,93 @@
-<div id="auth-box" style="background: white; padding: 20px; border: 2px solid #E70013; position: fixed; top: 20%; left: 5%; right: 5%; z-index: 1000; display: none; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-    <h3>سجل بياناتك للمنافسة 🏆</h3>
-    <input type="text" id="user-name" placeholder="اسمك الكامل" style="width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="email" id="user-email" placeholder="بريدك الإلكتروني" style="width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
-    <button onclick="saveUser()" style="background: #E70013; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">بدء التحدي</button>
-</div>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي السرعة تونس 🇹🇳</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #fff; color: #E70013; margin: 0; padding: 20px; }
+        .header { background: #E70013; color: white; padding: 15px; border-radius: 15px; }
+        #click-btn { width: 150px; height: 150px; border-radius: 50%; border: 8px solid #E70013; background: white; font-size: 40px; cursor: pointer; margin-top: 20px; }
+        #auth-box { background: white; padding: 20px; border: 2px solid #E70013; position: fixed; top: 15%; left: 5%; right: 5%; z-index: 1000; display: none; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
 
-<script>
-    // 1. نظام التحقق عند فتح اللعبة
-    window.onload = function() {
-        if (!localStorage.getItem('userEmail')) {
-            document.getElementById('auth-box').style.display = 'block';
+    <div id="auth-box">
+        <h3>سجل بياناتك للمنافسة 🏆</h3>
+        <input type="text" id="user-name" placeholder="اسمك الكامل" style="width: 85%; padding: 10px; margin: 10px 0;">
+        <input type="email" id="user-email" placeholder="بريدك الإلكتروني" style="width: 85%; padding: 10px; margin: 10px 0;">
+        <button onclick="saveUser()" style="background: #E70013; color: white; padding: 10px; width: 90%; border: none; border-radius: 5px;">بدء التحدي</button>
+    </div>
+
+    <div class="header"><h2>تحدي الـ 1,000,000 🇹🇳</h2></div>
+    <p>النقاط: <span id="total-points">0</span> | العملات: <span id="coins">0</span></p>
+    <p>وقت الجولة: <span id="timer">10</span> ثانية</p>
+    <button id="click-btn" onclick="handleClick()">🖱️</button>
+    <p id="message">اضغط للبدء!</p>
+
+    <script>
+        const scriptURL = 'ضع_رابط_جوجل_هنا_هنا'; // تأكد من وضع الرابط الصحيح هنا
+        let totalPoints = parseInt(localStorage.getItem('totalPoints')) || 0;
+        let coins = parseInt(localStorage.getItem('coins')) || 0;
+        let currentScore = 0, timeLeft = 10, gameActive = false, timerId;
+
+        window.onload = function() {
+            if (!localStorage.getItem('userEmail')) {
+                document.getElementById('auth-box').style.display = 'block';
+            }
+            updateDisplay();
         }
-    }
 
-    // 2. حفظ بيانات اللاعب
-    function saveUser() {
-        let name = document.getElementById('user-name').value;
-        let email = document.getElementById('user-email').value;
-        if (name && email) {
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userEmail', email);
-            document.getElementById('auth-box').style.display = 'none';
-        } else {
-            alert("الرجاء إدخال البيانات كاملة للمشاركة في الجوائز");
+        function saveUser() {
+            let name = document.getElementById('user-name').value;
+            let email = document.getElementById('user-email').value;
+            if (name && email) {
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userEmail', email);
+                document.getElementById('auth-box').style.display = 'none';
+            }
         }
-    }
 
-    // 3. إرسال النتائج لجدول جوجل تلقائياً
-    function sendDataToAdmin(points, coins) {
-        const scriptURL = 'ضع_رابط_جوجل_هنا'; // استبدل هذا بالرابط الذي نسخته من Google Script
-        
-        const data = {
-            name: localStorage.getItem('userName'),
-            email: localStorage.getItem('userEmail'),
-            points: points,
-            coins: coins
-        };
+        function handleClick() {
+            if (!gameActive && timeLeft === 10) startGame();
+            if (gameActive) { currentScore++; document.getElementById('message').innerText = "نقاط الجولة: " + currentScore; }
+        }
 
-        fetch(scriptURL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(() => console.log("تم تحديث ترتيبك في الجدول بنجاح"))
-        .catch((error) => console.error('خطأ في الإرسال:', error));
-    }
+        function startGame() {
+            gameActive = true;
+            timerId = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
 
-    // ملاحظة: لا تنسَ استدعاء sendDataToAdmin(totalPoints, coins) داخل دالة endGame() 
-    // لكي يتم إرسال البيانات فور انتهاء جولة اللاعب.
-</script>
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerId);
+            totalPoints += currentScore;
+            coins += Math.floor(currentScore / 150) * 10;
+            localStorage.setItem('totalPoints', totalPoints);
+            localStorage.setItem('coins', coins);
+            updateDisplay();
+            sendDataToAdmin(totalPoints, coins);
+            alert("انتهت الجولة! تم حفظ نقاطك.");
+            location.reload(); // لإعادة التصفير
+        }
+
+        function updateDisplay() {
+            document.getElementById('total-points').innerText = totalPoints;
+            document.getElementById('coins').innerText = coins;
+        }
+
+        function sendDataToAdmin(p, c) {
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ name: localStorage.getItem('userName'), email: localStorage.getItem('userEmail'), points: p, coins: c })
+            });
+        }
+    </script>
+</body>
+</html>
