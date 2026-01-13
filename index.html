@@ -26,7 +26,21 @@
     }
 
     // إضافة وظيفة إرسال البيانات (ستربطها بـ Google Script لاحقاً)
-    function sendDataToAdmin(points) {
+    function sendDataToAdmin(points, coins) {
+    const scriptURL = 'ضع_رابط_جوجل_هنا'; // ضع الرابط الذي نسخته من الخطوة 2 هنا
+    
+    fetch(scriptURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+            name: localStorage.getItem('userName'),
+            email: localStorage.getItem('userEmail'),
+            points: points,
+            coins: coins
+        })
+    }).then(() => console.log("تم تسجيل النقاط بنجاح"));
+}
+(points) {
         console.log("إرسال البيانات: " + points);
         // هنا يتم إضافة كود الربط بـ Google Sheets
     }
