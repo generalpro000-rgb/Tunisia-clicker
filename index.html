@@ -1,18 +1,19 @@
-<div id="auth-box" style="background: white; padding: 20px; border: 2px solid #E70013; position: fixed; top: 20%; left: 5%; right: 5%; z-index: 1000; display: none; border-radius: 15px;">
+<div id="auth-box" style="background: white; padding: 20px; border: 2px solid #E70013; position: fixed; top: 20%; left: 5%; right: 5%; z-index: 1000; display: none; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
     <h3>سجل بياناتك للمنافسة 🏆</h3>
-    <input type="text" id="user-name" placeholder="اسمك الكامل" style="width: 80%; padding: 10px; margin: 10px 0;">
-    <input type="email" id="user-email" placeholder="بريدك الإلكتروني" style="width: 80%; padding: 10px; margin: 10px 0;">
-    <button onclick="saveUser()" style="background: #E70013; color: white; padding: 10px 20px; border: none; border-radius: 5px;">بدء التحدي</button>
+    <input type="text" id="user-name" placeholder="اسمك الكامل" style="width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+    <input type="email" id="user-email" placeholder="بريدك الإلكتروني" style="width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+    <button onclick="saveUser()" style="background: #E70013; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">بدء التحدي</button>
 </div>
 
 <script>
-    // نظام التحقق من التسجيل
+    // 1. نظام التحقق عند فتح اللعبة
     window.onload = function() {
         if (!localStorage.getItem('userEmail')) {
             document.getElementById('auth-box').style.display = 'block';
         }
     }
 
+    // 2. حفظ بيانات اللاعب
     function saveUser() {
         let name = document.getElementById('user-name').value;
         let email = document.getElementById('user-email').value;
@@ -21,27 +22,31 @@
             localStorage.setItem('userEmail', email);
             document.getElementById('auth-box').style.display = 'none';
         } else {
-            alert("الرجاء إدخال البيانات كاملة");
+            alert("الرجاء إدخال البيانات كاملة للمشاركة في الجوائز");
         }
     }
 
-    // إضافة وظيفة إرسال البيانات (ستربطها بـ Google Script لاحقاً)
+    // 3. إرسال النتائج لجدول جوجل تلقائياً
     function sendDataToAdmin(points, coins) {
-    const scriptURL = 'ضع_رابط_جوجل_هنا'; // ضع الرابط الذي نسخته من الخطوة 2 هنا
-    
-    fetch(scriptURL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
+        const scriptURL = 'ضع_رابط_جوجل_هنا'; // استبدل هذا بالرابط الذي نسخته من Google Script
+        
+        const data = {
             name: localStorage.getItem('userName'),
             email: localStorage.getItem('userEmail'),
             points: points,
             coins: coins
+        };
+
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         })
-    }).then(() => console.log("تم تسجيل النقاط بنجاح"));
-}
-(points) {
-        console.log("إرسال البيانات: " + points);
-        // هنا يتم إضافة كود الربط بـ Google Sheets
+        .then(() => console.log("تم تحديث ترتيبك في الجدول بنجاح"))
+        .catch((error) => console.error('خطأ في الإرسال:', error));
     }
+
+    // ملاحظة: لا تنسَ استدعاء sendDataToAdmin(totalPoints, coins) داخل دالة endGame() 
+    // لكي يتم إرسال البيانات فور انتهاء جولة اللاعب.
 </script>
