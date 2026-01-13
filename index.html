@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي السرعة تونس 🇹🇳</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #ffffff; color: #E70013; margin: 0; padding: 20px; }
+        .header { background: #E70013; color: white; padding: 20px; border-radius: 15px; }
+        #click-btn { width: 180px; height: 180px; border-radius: 50%; border: 8px solid #E70013; background: white; color: #E70013; font-size: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.2); margin-top: 30px; }
+        #click-btn:active { transform: scale(0.95); }
+        .stat-box { display: flex; justify-content: space-around; font-size: 24px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>تحدي السرعة 🇹🇳</h1><p>قداش تقدر تنزل في 10 ثواني؟</p></div>
+    <div class="stat-box"><div>⏳ الوقت: <span id="timer">10</span></div><div>🚀 النقاط: <span id="score">0</span></div></div>
+    <button id="click-btn" onclick="handleClick()">🖱️</button>
+    <p id="message">اضغط للبدء!</p>
+    <script>
+        let score = 0, timeLeft = 10, gameActive = false, timerId;
+        function handleClick() {
+            if (!gameActive && timeLeft === 10) { startGame(); }
+            if (gameActive) { score++; document.getElementById('score').innerText = score; }
+        }
+        function startGame() {
+            gameActive = true; document.getElementById('message').innerText = "أسرع أسرع! 🔥";
+            timerId = setInterval(() => {
+                timeLeft--; document.getElementById('timer').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    gameActive = false; clearInterval(timerId);
+                    document.getElementById('click-btn').disabled = true;
+                    document.getElementById('message').innerText = "انتهى! نتيجتك: " + score;
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
