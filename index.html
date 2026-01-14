@@ -1,105 +1,36 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tunisia Clicker - نظام المليمات</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .stat-box { background: #fff5f5; border: 1px solid #ffcccc; padding: 10px; margin: 10px 0; border-radius: 8px; }
-        .btn-click { background: #e70013; color: white; border: none; padding: 20px; border-radius: 50%; width: 120px; height: 120px; cursor: pointer; font-weight: bold; font-size: 18px; margin: 20px 0; }
-        .btn-buy { background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
-        .hidden { display: none; }
-        input { width: 80%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
-    </style>
-</head>
-<body>
+<div class="stat-box" style="margin-top: 20px; border: 2px dashed #28a745;">
+    <h4>شحن رصيد (QR / Code)</h4>
+    <input type="text" id="coupon-input" placeholder="أدخل الكود هنا">
+    <button onclick="redeemCode()" style="background-color: #28a745; color: white; padding: 5px 15px; border: none; border-radius: 5px;">تفعيل الكود</button>
+</div>
 
-    <div id="login-section" class="card">
-        <h2>تسجيل الدخول</h2>
-        <input type="text" id="username" placeholder="اسم المستخدم">
-        <button class="btn-buy" onclick="login()">دخول</button>
-    </div>
+<script>
+    // دالة تفعيل الكود
+    function redeemCode() {
+        const code = document.getElementById('coupon-input').value.trim();
+        if (!code) return alert("الرجاء إدخال الكود أولاً");
 
-    <div id="game-section" class="card hidden">
-        <h3 id="user-display"></h3>
+        // 1. التحقق من وجود الكود في قاعدة البيانات
+        const couponRef = db.ref('coupons/' + code);
         
-        <div class="stat-box">
-            <div>الضربات: <span id="clicks">0</span></div>
-            <div style="color: #e70013; font-weight: bold;">الرصيد: <span id="millimes">0</span> مليم</div>
-        </div>
+        couponRef.once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                const prizeValue = snapshot.val(); // القيمة (مثلاً 500 مليم)
 
-        <button class="btn-click" onclick="handleTouch()">اضغط 🇹🇳</button>
+                // 2. إضافة القيمة لحساب اللاعب
+                const userRef = db.ref('players/' + currentUser + '/balance');
+                userRef.transaction((currentBalance) => {
+                    return (currentBalance || 0) + prizeValue;
+                });
 
-        <div class="stat-box">
-            <h4>متجر المليمات</h4>
-            <p style="font-size: 12px;">سعر 1 مليم = 500 مليم (رصيد)</p>
-            <button class="btn-buy" onclick="requestPurchase()">طلب شراء مليم (QR)</button>
-        </div>
+                // 3. حذف الكود من قاعدة البيانات لكي لا يستخدمه شخص آخر (استخدام لمرة واحدة)
+                couponRef.remove();
 
-        <div id="qr-display" class="hidden">
-            <p>أرسل طلبك للإيميل للحصول على كود QR</p>
-            <small>admin@example.com</small>
-        </div>
-
-        <button onclick="logout()" style="margin-top:20px; background:none; border:none; color:blue; cursor:pointer;">خروج</button>
-    </div>
-
-    <script>
-        let userData = { clicks: 0, millimes: 0 };
-
-        function login() {
-            const name = document.getElementById('username').value;
-            if(!name) return alert("أدخل اسمك");
-            localStorage.setItem('tun_user', name);
-            loadData(name);
-            document.getElementById('login-section').classList.add('hidden');
-            document.getElementById('game-section').classList.remove('hidden');
-            document.getElementById('user-display').innerText = "اللاعب: " + name;
-        }
-
-        function loadData(name) {
-            const saved = localStorage.getItem('data_' + name);
-            if(saved) {
-                userData = JSON.parse(saved);
-                updateUI();
+                alert("مبروك! تم شحن " + prizeValue + " مليم في حسابك.");
+                document.getElementById('coupon-input').value = "";
+            } else {
+                alert("عذراً، هذا الكود غير صالح أو تم استخدامه مسبقاً.");
             }
-        }
-
-        function handleTouch() {
-            userData.clicks += 1;
-            
-            // الحسبة: كل 100 ضربة تزيد مليم صغير جداً 0.00001
-            // عند الوصول لـ 1 مليم حقيقي يضاف للمجموع
-            // برمجياً: مليم واحد = 10,000,000 ضربة بناءً على حسبتك (100 * 100000)
-            
-            if(userData.clicks >= 10000000) { 
-                userData.millimes += 1;
-                userData.clicks = 0;
-            }
-            
-            saveAndUI();
-        }
-
-        function requestPurchase() {
-            alert("لشراء 1 مليم بقيمة 500 مليم، يرجى مراسلة الإدارة للحصول على QR Code");
-            document.getElementById('qr-display').classList.remove('hidden');
-        }
-
-        function saveAndUI() {
-            localStorage.setItem('data_' + localStorage.getItem('tun_user'), JSON.stringify(userData));
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('clicks').innerText = userData.clicks;
-            document.getElementById('millimes').innerText = userData.millimes;
-        }
-
-        function logout() {
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+        });
+    }
+</script>
