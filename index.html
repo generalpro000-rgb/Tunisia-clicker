@@ -3,107 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tunisia Clicker Pro</title>
+    <title>Tunisia Clicker - تونس كليكر</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .btn-click { background-color: #e70013; color: white; border: none; padding: 20px; border-radius: 10px; font-size: 20px; cursor: pointer; width: 80%; margin: 15px 0; }
-        .btn-click:active { transform: scale(0.98); }
-        .stat { font-size: 24px; font-weight: bold; margin: 10px 0; color: #333; }
-        .millime { color: #e70013; font-size: 30px; }
-        input { width: 80%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
-        .coupon-section { background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .btn-click { background-color: #e70013; color: white; border: none; width: 140px; height: 140px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 #b3000e; margin: 20px 0; }
+        .btn-click:active { transform: translateY(4px); box-shadow: 0 2px 0 #b3000e; }
+        .stat { font-size: 24px; margin: 10px 0; color: #333; }
+        .balance { font-size: 32px; color: #e70013; font-weight: bold; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; text-align: center; }
         .hidden { display: none; }
+        .coupon-box { background: #f0fff4; border: 2px dashed #28a745; padding: 15px; border-radius: 12px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="login-screen">
-        <h2>Tunisia Clicker</h2>
+<div class="card">
+    <div id="login-screen">
+        <h1>Tunisia Clicker</h1>
         <input type="text" id="username" placeholder="أدخل اسمك هنا...">
-        <button class="btn-click" onclick="login()">دخول اللعبة</button>
+        <button onclick="login()" style="background:#28a745; color:white; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; width:100%;">دخول</button>
     </div>
 
-    <div class="card hidden" id="game-screen">
-        <h2 id="welcome-msg">أهلاً بك</h2>
+    <div id="game-screen" class="hidden">
+        <h2 id="hello-msg">أهلاً بك</h2>
         <div class="stat">الضربات: <span id="clicks-display">0</span></div>
-        <div class="stat millime"><span id="balance-display">0</span> مليم</div>
+        <div class="balance"><span id="balance-display">0</span> مليم</div>
         
-        <button class="btn-click" onclick="addClick()">!اضغط هنا 🇹🇳</button>
+        <button class="btn-click" onclick="addClick()">إضغط 🇹🇳</button>
 
-        <div class="coupon-section">
+        <div class="coupon-box">
             <h4>شحن كود (QR)</h4>
             <input type="text" id="coupon-input" placeholder="أدخل كود الشحن">
-            <button onclick="redeemCoupon()" style="background:#2e7d32; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">تفعيل</button>
+            <button onclick="redeem()" style="background:#28a745; color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">تفعيل الكود</button>
         </div>
-
-        <button onclick="location.reload()" style="margin-top:20px; border:none; background:none; color:blue; cursor:pointer;">خروج</button>
+        
+        <button onclick="location.reload()" style="margin-top:20px; background:none; border:none; color:blue; cursor:pointer; text-decoration:underline;">تسجيل الخروج</button>
     </div>
+</div>
 
-    <script>
-        // إعدادات Firebase الخاصة بك
-        const firebaseConfig = {
-            apiKey: "AIzaSy...", // استبدلها من إعدادات مشروعك
-            databaseURL: "https://tunisia-clicker-default-rtdb.firebaseio.com/", // رابط قاعدة بياناتك
-            projectId: "tunisia-clicker"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let user = "";
+<script>
+    // ⚠️ ضع بياناتك من Firebase هنا ⚠️
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let currentUser = "";
 
-        function login() {
-            user = document.getElementById('username').value.trim();
-            if(!user) return alert("ادخل اسمك");
-            
-            db.ref('players/' + user).once('value').then((snap) => {
-                if(!snap.exists()) db.ref('players/' + user).set({ clicks: 0, balance: 0 });
-                showGame();
-            });
-        }
+    function login() {
+        const name = document.getElementById('username').value.trim();
+        if(!name) return alert("الرجاء إدخال اسمك");
+        currentUser = name.replace(/\s+/g, '_');
+        
+        db.ref('players/' + currentUser).once('value').then((snap) => {
+            if(!snap.exists()) db.ref('players/' + currentUser).set({ clicks: 0, balance: 0 });
+            showGame();
+        });
+    }
 
-        function showGame() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerText = "أهلاً بك يا " + user;
+    function showGame() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('hello-msg').innerText = "أهلاً بك يا " + currentUser;
 
-            db.ref('players/' + user).on('value', (snap) => {
-                const data = snap.val();
-                document.getElementById('clicks-display').innerText = data.clicks;
-                document.getElementById('balance-display').innerText = data.balance;
-            });
-        }
+        db.ref('players/' + currentUser).on('value', (snap) => {
+            const data = snap.val();
+            document.getElementById('clicks-display').innerText = data.clicks;
+            document.getElementById('balance-display').innerText = data.balance;
+        });
+    }
 
-        function addClick() {
-            const ref = db.ref('players/' + user);
-            ref.transaction((data) => {
-                if(data) {
-                    data.clicks++;
-                    if(data.clicks >= 10000000) { // 10 مليون ضغطة = 1 مليم
-                        data.balance++;
-                        data.clicks = 0;
-                    }
+    function addClick() {
+        db.ref('players/' + currentUser).transaction((data) => {
+            if(data) {
+                data.clicks++;
+                if(data.clicks >= 10000000) { // حسبتك: 10 مليون ضغطة = 1 مليم
+                    data.balance++;
+                    data.clicks = 0;
                 }
-                return data;
-            });
-        }
+            }
+            return data;
+        });
+    }
 
-        function redeemCoupon() {
-            const code = document.getElementById('coupon-input').value.trim();
-            if(!code) return;
-
-            db.ref('coupons/' + code).once('value').then((snap) => {
-                if(snap.exists()) {
-                    const val = snap.val();
-                    db.ref('players/' + user + '/balance').transaction(b => (b || 0) + val);
-                    db.ref('coupons/' + code).remove(); // حذف الكود بعد الاستخدام
-                    alert("تم شحن " + val + " مليم!");
-                } else {
-                    alert("كود غير صحيح");
-                }
-            });
-        }
-    </script>
+    function redeem() {
+        const code = document.getElementById('coupon-input').value.trim();
+        if(!code) return;
+        db.ref('coupons/' + code).once('value').then((snap) => {
+            if(snap.exists()) {
+                const val = snap.val();
+                db.ref('players/' + currentUser + '/balance').transaction(b => (b || 0) + val);
+                db.ref('coupons/' + code).remove();
+                alert("مبروك! تم شحن " + val + " مليم.");
+            } else { alert("كود غير صالح"); }
+        });
+    }
+</script>
 </body>
 </html>
