@@ -1,82 +1,104 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تونس كليكر - Tunisia Clicker</title>
+    <title>Tunisia Clicker - نظام المليمات</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding: 50px; }
-        .login-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
-        input { padding: 10px; margin: 10px; border: 1px solid #ccc; border-radius: 5px; width: 200px; }
-        button { padding: 10px 20px; background-color: #e70013; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background-color: #c40010; }
-        #game-section { display: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .stat-box { background: #fff5f5; border: 1px solid #ffcccc; padding: 10px; margin: 10px 0; border-radius: 8px; }
+        .btn-click { background: #e70013; color: white; border: none; padding: 20px; border-radius: 50%; width: 120px; height: 120px; cursor: pointer; font-weight: bold; font-size: 18px; margin: 20px 0; }
+        .btn-buy { background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .hidden { display: none; }
+        input { width: 80%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-    <div id="login-section" class="login-box">
-        <h2>مرحباً بك في Tunisia Clicker</h2>
-        <input type="text" id="username" placeholder="أدخل اسمك هنا...">
-        <br>
-        <button onclick="startGame()">دخول اللعبة</button>
+    <div id="login-section" class="card">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم">
+        <button class="btn-buy" onclick="login()">دخول</button>
     </div>
 
-    <div id="game-section">
-        <h1 id="welcome-msg"></h1>
-        <div style="font-size: 48px;" id="score">0</div>
-        <button style="font-size: 24px; padding: 20px;" onclick="addPoint()">اضغط هنا! 🇹🇳</button>
-        <br><br>
-        <button onclick="logout()">خروج</button>
+    <div id="game-section" class="card hidden">
+        <h3 id="user-display"></h3>
+        
+        <div class="stat-box">
+            <div>الضربات: <span id="clicks">0</span></div>
+            <div style="color: #e70013; font-weight: bold;">الرصيد: <span id="millimes">0</span> مليم</div>
+        </div>
+
+        <button class="btn-click" onclick="handleTouch()">اضغط 🇹🇳</button>
+
+        <div class="stat-box">
+            <h4>متجر المليمات</h4>
+            <p style="font-size: 12px;">سعر 1 مليم = 500 مليم (رصيد)</p>
+            <button class="btn-buy" onclick="requestPurchase()">طلب شراء مليم (QR)</button>
+        </div>
+
+        <div id="qr-display" class="hidden">
+            <p>أرسل طلبك للإيميل للحصول على كود QR</p>
+            <small>admin@example.com</small>
+        </div>
+
+        <button onclick="logout()" style="margin-top:20px; background:none; border:none; color:blue; cursor:pointer;">خروج</button>
     </div>
 
     <script>
-        // دالة الدخول
-        function startGame() {
-            const user = document.getElementById('username').value;
-            if (user.trim() === "") {
-                alert("الرجاء إدخال اسمك أولاً!");
-                return;
+        let userData = { clicks: 0, millimes: 0 };
+
+        function login() {
+            const name = document.getElementById('username').value;
+            if(!name) return alert("أدخل اسمك");
+            localStorage.setItem('tun_user', name);
+            loadData(name);
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('game-section').classList.remove('hidden');
+            document.getElementById('user-display').innerText = "اللاعب: " + name;
+        }
+
+        function loadData(name) {
+            const saved = localStorage.getItem('data_' + name);
+            if(saved) {
+                userData = JSON.parse(saved);
+                updateUI();
+            }
+        }
+
+        function handleTouch() {
+            userData.clicks += 1;
+            
+            // الحسبة: كل 100 ضربة تزيد مليم صغير جداً 0.00001
+            // عند الوصول لـ 1 مليم حقيقي يضاف للمجموع
+            // برمجياً: مليم واحد = 10,000,000 ضربة بناءً على حسبتك (100 * 100000)
+            
+            if(userData.clicks >= 10000000) { 
+                userData.millimes += 1;
+                userData.clicks = 0;
             }
             
-            // حفظ الاسم في المتصفح
-            localStorage.setItem('currentPlayer', user);
-            showGame(user);
+            saveAndUI();
         }
 
-        // إظهار واجهة اللعبة
-        function showGame(user) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('game-section').style.display = 'block';
-            document.getElementById('welcome-msg').innerText = "أهلاً بك يا " + user;
-            
-            // استرجاع النقاط السابقة إذا وجدت
-            let savedScore = localStorage.getItem('score_' + user) || 0;
-            document.getElementById('score').innerText = savedScore;
+        function requestPurchase() {
+            alert("لشراء 1 مليم بقيمة 500 مليم، يرجى مراسلة الإدارة للحصول على QR Code");
+            document.getElementById('qr-display').classList.remove('hidden');
         }
 
-        // إضافة نقاط وحفظها
-        function addPoint() {
-            let scoreDiv = document.getElementById('score');
-            let currentScore = parseInt(scoreDiv.innerText) + 1;
-            scoreDiv.innerText = currentScore;
-            
-            let user = localStorage.getItem('currentPlayer');
-            localStorage.setItem('score_' + user, currentScore);
+        function saveAndUI() {
+            localStorage.setItem('data_' + localStorage.getItem('tun_user'), JSON.stringify(userData));
+            updateUI();
         }
 
-        // الخروج
+        function updateUI() {
+            document.getElementById('clicks').innerText = userData.clicks;
+            document.getElementById('millimes').innerText = userData.millimes;
+        }
+
         function logout() {
-            localStorage.removeItem('currentPlayer');
             location.reload();
-        }
-
-        // التحقق مما إذا كان المستخدم مسجلاً مسبقاً عند فتح الصفحة
-        window.onload = function() {
-            let user = localStorage.getItem('currentPlayer');
-            if (user) {
-                showGame(user);
-            }
         }
     </script>
 </body>
