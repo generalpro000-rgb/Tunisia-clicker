@@ -3,43 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تونس كليكر Pro 🇹🇳</title>
-    
+    <title>Tunisia Clicker Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        :root { --primary: #e70013; --secondary: #28a745; --bg: #ffffff; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
-        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .stat-box { background: #fff5f5; border: 1px solid #ffcccc; padding: 15px; border-radius: 10px; margin: 15px 0; }
-        .balance-text { font-size: 32px; font-weight: bold; color: var(--primary); }
-        .btn-click { background: var(--primary); color: white; border: none; width: 130px; height: 130px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 #b3000e; margin: 20px 0; outline: none; }
-        .btn-click:active { transform: translateY(4px); box-shadow: 0 2px 0 #b3000e; }
-        input { width: 85%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-        .btn-action { background: var(--secondary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .btn-click { background-color: #e70013; color: white; border: none; padding: 20px; border-radius: 10px; font-size: 20px; cursor: pointer; width: 80%; margin: 15px 0; }
+        .btn-click:active { transform: scale(0.98); }
+        .stat { font-size: 24px; font-weight: bold; margin: 10px 0; color: #333; }
+        .millime { color: #e70013; font-size: 30px; }
+        input { width: 80%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
+        .coupon-section { background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 20px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="login-screen">
+    <div class="card" id="login-screen">
         <h2>Tunisia Clicker</h2>
-        <input type="text" id="username" placeholder="أدخل اسم المستخدم">
-        <button class="btn-action" onclick="handleLogin()">دخول اللعبة</button>
+        <input type="text" id="username" placeholder="أدخل اسمك هنا...">
+        <button class="btn-click" onclick="login()">دخول اللعبة</button>
     </div>
 
-    <div id="game-screen" class="hidden">
-        <h3 id="player-name">مرحباً بك</h3>
+    <div class="card hidden" id="game-screen">
+        <h2 id="welcome-msg">أهلاً بك</h2>
+        <div class="stat">الضربات: <span id="clicks-display">0</span></div>
+        <div class="stat millime"><span id="balance-display">0</span> مليم</div>
         
-        <div class="stat-box">
-            <div>رصيدك الحالي</div>
-            <div class="balance-text"><span id="balance-display">0</span> مليم</div>
-            <div style="font-size: 14px; color: #666;">الضربات: <span id="clicks-display">0</span></div>
+        <button class="btn-click" onclick="addClick()">!اضغط هنا 🇹🇳</button>
+
+        <div class="coupon-section">
+            <h4>شحن كود (QR)</h4>
+            <input type="text" id="coupon-input" placeholder="أدخل كود الشحن">
+            <button onclick="redeemCoupon()" style="background:#2e7d32; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">تفعيل</button>
         </div>
 
-        <button class="btn-click" onclick="recordClick()">اضغط هنا! 🇹🇳</button>
+        <button onclick="location.reload()" style="margin-top:20px; border:none; background:none; color:blue; cursor:pointer;">خروج</button>
+    </div>
 
-        <div class="stat-box" style="border-color: var(--secondary); background: #f0fff4;">
-            <h4>شحن كود
+    <script>
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSy...", // استبدلها من إعدادات مشروعك
+            databaseURL: "https://tunisia-clicker-default-rtdb.firebaseio.com/", // رابط قاعدة بياناتك
+            projectId: "tunisia-clicker"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let user = "";
+
+        function login() {
+            user = document.getElementById('username').value.trim();
+            if(!user) return alert("ادخل اسمك");
+            
+            db.ref('players/' + user).once('value').then((snap) => {
+                if(!snap.exists()) db.ref('players/' + user).set({ clicks: 0, balance: 0 });
+                showGame();
+            });
+        }
+
+        function showGame() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = "أهلاً بك يا " + user;
+
+            db.ref('players/' + user).on('value', (snap) => {
+                const data = snap.val();
+                document.getElementById('clicks-display').innerText = data.clicks;
+                document.getElementById('balance-display').innerText = data.balance;
+            });
+        }
+
+        function addClick() {
+            const ref = db.ref('players/' + user);
+            ref.transaction((data) => {
+                if(data) {
+                    data.clicks++;
+                    if(data.clicks >= 10000000) { // 10 مليون ضغطة = 1 مليم
+                        data.balance++;
+                        data.clicks = 0;
+                    }
+                }
+                return data;
+            });
+        }
+
+        function redeemCoupon() {
+            const code = document.getElementById('coupon-input').value.trim();
+            if(!code) return;
+
+            db.ref('coupons/' + code).once('value').then((snap) => {
+                if(snap.exists()) {
+                    const val = snap.val();
+                    db.ref('players/' + user + '/balance').transaction(b => (b || 0) + val);
+                    db.ref('coupons/' + code).remove(); // حذف الكود بعد الاستخدام
+                    alert("تم شحن " + val + " مليم!");
+                } else {
+                    alert("كود غير صحيح");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
