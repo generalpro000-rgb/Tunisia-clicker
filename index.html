@@ -3,166 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tunisia Clicker Pro 🇹🇳</title>
+    <title>تونس كليكر Pro 🇹🇳</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --primary: #e70013; --secondary: #28a745; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
-        h1, h2 { color: #333; margin-bottom: 20px; }
-        .stat-box { background: #fff5f5; border: 1px solid #ffcccc; padding: 15px; border-radius: 12px; margin: 15px 0; }
-        .balance-val { font-size: 32px; font-weight: bold; color: var(--primary); }
-        .btn-click { background: var(--primary); color: white; border: none; width: 140px; height: 140px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; transition: transform 0.1s; box-shadow: 0 6px 0 #b3000e; margin: 20px 0; }
+        :root { --primary: #e70013; --secondary: #28a745; --bg: #ffffff; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .stat-box { background: #fff5f5; border: 1px solid #ffcccc; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        .balance-text { font-size: 32px; font-weight: bold; color: var(--primary); }
+        .btn-click { background: var(--primary); color: white; border: none; width: 130px; height: 130px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 0 #b3000e; margin: 20px 0; outline: none; }
         .btn-click:active { transform: translateY(4px); box-shadow: 0 2px 0 #b3000e; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .btn-action { background: var(--secondary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
+        input { width: 85%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
+        .btn-action { background: var(--secondary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
         .hidden { display: none; }
-        .footer-links { margin-top: 25px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div id="login-section">
-        <h1>Tunisia Clicker</h1>
-        <p>ابدأ بجمع المليمات التونسية الآن!</p>
-        <input type="text" id="username" placeholder="أدخل اسم المستخدم الخاص بك">
-        <button class="btn-action" onclick="login()">دخول اللعبة</button>
+<div class="container">
+    <div id="login-screen">
+        <h2>Tunisia Clicker</h2>
+        <input type="text" id="username" placeholder="أدخل اسم المستخدم">
+        <button class="btn-action" onclick="handleLogin()">دخول اللعبة</button>
     </div>
 
-    <div id="game-section" class="hidden">
-        <h2 id="welcome-msg">مرحباً</h2>
+    <div id="game-screen" class="hidden">
+        <h3 id="player-name">مرحباً بك</h3>
         
         <div class="stat-box">
             <div>رصيدك الحالي</div>
-            <div class="balance-val"><span id="balance">0</span> مليم</div>
-            <div style="font-size: 14px; color: #888;">الضربات: <span id="clicks">0</span></div>
+            <div class="balance-text"><span id="balance-display">0</span> مليم</div>
+            <div style="font-size: 14px; color: #666;">الضربات: <span id="clicks-display">0</span></div>
         </div>
 
-        <button class="btn-click" onclick="handleGameClick()">اضغط 🇹🇳</button>
+        <button class="btn-click" onclick="recordClick()">اضغط هنا! 🇹🇳</button>
 
         <div class="stat-box" style="border-color: var(--secondary); background: #f0fff4;">
-            <h4>شحن كود (Redeem Code)</h4>
-            <input type="text" id="coupon-code" placeholder="أدخل كود QR أو الكود النصي">
-            <button class="btn-action" onclick="redeemCoupon()">تفعيل الكود</button>
-        </div>
-
-        <button onclick="requestNewCode()" style="background: none; border: none; color: blue; text-decoration: underline; cursor: pointer;">طلب شراء كود 500 مليم</button>
-        <br>
-        <button onclick="logout()" style="margin-top: 20px; color: red; border: none; background: none; cursor: pointer;">تسجيل الخروج</button>
-    </div>
-</div>
-
-<script>
-    // 1. إعدادات FIREBASE (استبدل البيانات ببياناتك)
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let currentUser = "";
-
-    // 2. دالة تسجيل الدخول
-    function login() {
-        const user = document.getElementById('username').value.trim().toLowerCase();
-        if (!user) return alert("الرجاء إدخال اسم صحيح");
-        
-        currentUser = user.replace(/[^a-z0-9]/g, "_"); // تنظيف الاسم لقاعدة البيانات
-        
-        db.ref('players/' + currentUser).once('value').then((snapshot) => {
-            if (!snapshot.exists()) {
-                // إنشاء ملف جديد للاعب
-                db.ref('players/' + currentUser).set({
-                    clicks: 0,
-                    balance: 0,
-                    lastLogin: Date.now()
-                });
-            }
-            startApp();
-        });
-    }
-
-    // 3. تشغيل التطبيق وجلب البيانات
-    function startApp() {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('game-section').classList.remove('hidden');
-        document.getElementById('welcome-msg').innerText = "أهلاً بك: " + currentUser;
-
-        // استماع فوري لتغير البيانات
-        db.ref('players/' + currentUser).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                document.getElementById('clicks').innerText = data.clicks.toLocaleString();
-                document.getElementById('balance').innerText = data.balance.toLocaleString();
-            }
-        });
-    }
-
-    // 4. منطق الضغط (الحسبة التي طلبتها)
-    function handleGameClick() {
-        const playerRef = db.ref('players/' + currentUser);
-        playerRef.transaction((data) => {
-            if (data) {
-                data.clicks++;
-                // كل 100 ضربة = 0.00001 مليم
-                // يعني 1 مليم = 10 مليون ضربة
-                if (data.clicks >= 10000000) {
-                    data.balance = (data.balance || 0) + 1;
-                    data.clicks = 0;
-                }
-            }
-            return data;
-        });
-    }
-
-    // 5. نظام شحن الأكواد (Coupons)
-    function redeemCoupon() {
-        const code = document.getElementById('coupon-code').value.trim();
-        if (!code) return alert("أدخل الكود أولاً");
-
-        const couponRef = db.ref('coupons/' + code);
-        
-        couponRef.once('value').then((snapshot) => {
-            if (snapshot.exists()) {
-                const value = snapshot.val();
-                
-                // إضافة القيمة للاعب
-                db.ref('players/' + currentUser + '/balance').transaction((current) => {
-                    return (current || 0) + value;
-                });
-
-                // حذف الكود لضمان استخدامه مرة واحدة فقط
-                couponRef.remove();
-                
-                alert("تم شحن " + value + " مليم بنجاح!");
-                document.getElementById('coupon-code').value = "";
-            } else {
-                alert("الكود غير صحيح أو منتهي الصلاحية");
-            }
-        });
-    }
-
-    // 6. طلب الشراء
-    function requestNewCode() {
-        const subject = encodeURIComponent("طلب شراء كود مليم - " + currentUser);
-        const body = encodeURIComponent("أريد شراء كود مليم واحد بقيمة 500 مليم. اسمي في اللعبة: " + currentUser);
-        window.location.href = `mailto:admin@example.com?subject=${subject}&body=${body}`;
-    }
-
-    function logout() {
-        location.reload();
-    }
-</script>
-
-</body>
-</html>
+            <h4>شحن كود
